@@ -205,12 +205,12 @@ def getXYAng(r,epsilon,n,m):
 ################################################################################
 ################################ Interact ######################################
 ################################################################################
-r=(1/1.125)/(0.5/(-0.5**2+1)**0.5)*0.5
+r=(1/1.125)/(0.5/(-0.5**2+1)**0.5)*0.5-0.3
 sides=6
 eta = 0
-particles=300
-gravity = 1
-timeCap=100
+particles=200
+gravity = 2.5
+timeCap=1000
 ################################################################################
 ################################################################################
 epsilon=0.0001
@@ -222,10 +222,13 @@ tabLineEqs=getLines(tabX,tabY,sides)
 gdata = [[],[],[],[],[],[],[],[],[],[]]
 (tabX,tabY)=make_ngon(sides)
 tabLineEqs=getLines(tabX,tabY,sides)
-csvName = r'D:\Users\janah\Desktop\Program-Projects\SinayBilliards\gdata_initial_particles_90k.csv'
+csvName = r'D:\Users\janah\Desktop\Projects\GaltonBoard\gdata_initial_particles_90k.csv'
 rf = open(csvName,'r')
 reader = csv.reader(rf)
 next(reader)
+
+for i in range(0,1100):
+    row = next(reader)
 
 for i in range(0,particles):
     row = next(reader)
@@ -262,11 +265,6 @@ for xframe,yframe,px,py,vx,vy,vs,wall,istorus,time in zip(gdata[0],gdata[1],gdat
         yFrame+=yTravel
         if isTorus:
             (pX,pY,wall)=torus(pX,pY,wall)
-    timeReverse = -(time - timeCap)
-    xFrame+=timeReverse*vX
-    yFrame+=timeReverse*vY - 0.5*(timeReverse**2)*gravity
-    pX+=timeReverse*vX
-    pY+=timeReverse*vY - 0.5*(timeReverse**2)*gravity
-    writer.writerow([xFrame,yFrame,pX,pY,vX,vY,vS,wall,isTorus,time+timeReverse])
+    writer.writerow([xFrame,yFrame,pX,pY,vX,vY,vS,wall,isTorus,time])
 
 f.close()

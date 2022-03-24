@@ -7,23 +7,23 @@ import csv
 fig, ax = plt.subplots()
 ax.set_aspect('equal')
 
-r=(1/1.125)/(0.5/(-0.5**2+1)**0.5)*0.5
-eta = 1
-nXY=15
-nAng=20
+r=(1/1.125)/(0.5/(-0.5**2+1)**0.5)*0.5-0.4
+eta = 0
+nXY=1
+nAng=200
 sumPosition=0
 coeffVstime=[[],[],[]]
 particles = nXY*nAng
-gravity = 1
-fname='galton('+str(round(r,2))+')_timeRange'+str(0)+'-'+str(177000)+'_particles'+str(particles)+'_eta'+str(eta)+'_gravity'+str(gravity)
+gravity = 2
+fname='galton('+str(round(r,2))+')_timeRange'+str(0)+'-'+str(78000)+'_particles'+str(particles)+'_eta'+str(eta)+'_gravity'+str(gravity)
 
 
 increment = 1000
 timeCap = 0
-while(timeCap<177000):
+while(timeCap<51000):
     sumPosition=0
     timeCap += increment
-    csvName = r'D:\Users\janah\Desktop\Program-Projects\SinayBilliards\gdata_eta_1_particles300_grav1\gdata_'+'eta_'+str(eta)+'time_'+str(timeCap)+'_particles'+str(particles)+'_grav'+str(gravity)+'.csv'
+    csvName = r'D:\Users\janah\Desktop\Projects\GaltonBoard\gdata_'+'eta_'+str(eta)+'time_'+str(timeCap)+'_particles'+str(particles)+'_grav'+str(gravity)+'.csv'
     rf = open(csvName,'r')
     reader = csv.reader(rf)
     next(reader)
@@ -32,10 +32,16 @@ while(timeCap<177000):
     for row in reader:
         xFrame = float(row[0])
         yFrame = float(row[1])
+        timeCapRead = float(row[9])
+        vX = float(row[4])
+        vY = float(row[5])
+        timeReverse = -(timeCap - timeCapRead)
+        xFrame+=timeReverse*vX
+        yFrame+=timeReverse*vY - 0.5*(timeReverse**2)*gravity
         sumPosition+=abs(yFrame)
-        # endPoslist.append((xFrame**2+yFrame**2)/timeCap)
+        endPoslist.append(np.log(abs(yFrame))/np.log(timeCap))
     rf.close()
-    # coeffVstime[2].append(np.std(endPoslist))
+    coeffVstime[2].append(np.std(endPoslist))
     average=sumPosition/(particles)
     coeffVstime[0].append(timeCap)
     coeffVstime[1].append(np.log(average)/np.log(timeCap))
@@ -62,5 +68,5 @@ plt.ylabel('log(E(y))/log(t)')
 plt.title('Eta='+str(eta))
 ax.set_aspect(1.0/ax.get_data_ratio(), adjustable='box')
 ############################### Save of Show ###################################
-plt.show()
-# plt.savefig(fname+'.eps')
+# plt.show()
+plt.savefig(fname+'.eps')

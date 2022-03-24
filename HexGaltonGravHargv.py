@@ -208,15 +208,15 @@ def getXYAng(r,epsilon,n,m):
 r=(1/1.125)/(0.5/(-0.5**2+1)**0.5)*0.5
 sides=6
 eta=0
-timeCap=2000
+timeCap=180000
 gravity = 1
-increment =1000
+increment =10000
 ################################################################################
 ################################################################################
 epsilon=0.0001
 ########################## TRAJECTORY MAP ######################################
 
-while(True):
+while(timeCap<190000):
     gdata = []
     (tabX,tabY)=make_ngon(sides)
     tabLineEqs=getLines(tabX,tabY,sides)

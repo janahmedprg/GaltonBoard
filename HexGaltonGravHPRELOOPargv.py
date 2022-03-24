@@ -210,7 +210,7 @@ r=(1/1.125)/(0.5/(-0.5**2+1)**0.5)*0.5
 sides=6
 eta = 0
 gravity = 1
-timeCap=1000
+timeCap=10000
 ################################################################################
 ################################################################################
 epsilon=0.0001
@@ -222,7 +222,7 @@ tabLineEqs=getLines(tabX,tabY,sides)
 gdata = []
 (tabX,tabY)=make_ngon(sides)
 tabLineEqs=getLines(tabX,tabY,sides)
-csvName = r'D:\Users\janah\Desktop\Program-Projects\SinayBilliards\gdata_initial_particles_90k.csv'
+csvName = r'D:\Users\janah\Desktop\Projects\GaltonBoard\gdata_initial_particles_90k.csv'
 rf = open(csvName,'r')
 reader = csv.reader(rf)
 next(reader)

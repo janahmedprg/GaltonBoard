@@ -215,19 +215,21 @@ def getXYAng(r,epsilon,n,m):
 ################################################################################
 r=(1/1.125)/(0.5/(-0.5**2+1)**0.5)*0.5
 sides=6
-startX=0.663512069754742
-startY=-0.390413112619048
-startAng=290
-spin=0.6
-eta=1
-N=28
-timeCap=5
+startX=-0.031709818
+startY=-0.769246982
+startAng=206.3168
+spin=0.2
+eta=0
+N=5
+timeCap=1000
 etaRange=11
 nXY=1
 nAng=1
 etaStart=0
 etaEnd=1
-gravity = 1
+gravity = 0.5
+startandend = True
+save = False
 ################################################################################
 ################################################################################
 epsilon=0.0001
@@ -236,7 +238,7 @@ epsilon=0.0001
 xyang = [[startX],[startY],[math.radians(startAng)]]
 
 for px,py,startAng in zip(xyang[0],xyang[1],xyang[2]):
-    fname='galton('+str(round(eta,2))+','+str(round(r,2))+'_x'+str(round(px,2))+'_y'+str(round(py,2))+'_ang'+str(round(math.degrees(startAng),2))+')_ite'+str(N)+'_grav'+str(round(gravity,3))
+    fname='galton('+str(round(eta,2))+','+str(round(r,2))+'_x'+str(round(px,2))+'_y'+str(round(py,2))+'_ang'+str(round(math.degrees(startAng),2))+')_time'+str(timeCap)+'_grav'+str(round(gravity,3))
     fig, ax = plt.subplots()
     ax.set_aspect('equal')
     pX=px
@@ -272,26 +274,31 @@ for px,py,startAng in zip(xyang[0],xyang[1],xyang[2]):
         if isTorus:
             (pX,pY,wall)=torus(pX,pY,wall)
 
-    timeReverse = -(time - timeCap)
-    xFrame+=timeReverse*vX
-    yFrame+=timeReverse*vY - 0.5*(timeReverse**2)*gravity
+    # timeReverse = -(time - timeCap)
+    # xFrame+=timeReverse*vX
+    # yFrame+=timeReverse*vY - 0.5*(timeReverse**2)*gravity
     print(xFrame,yFrame,time)
 
 
     # ax.plot(tabX, tabY,'k',linewidth=1)
     ax.plot(trajX, trajY,'k',linewidth=0.1)
-    plt.scatter(xFrame,yFrame,s=0.1)
+    if startandend:
+        plt.scatter(startX,startY,s=10,c='red')
+        plt.scatter(xFrame,yFrame,s=10,c='red')
+        fname += 'sep'
     fullboard=[]
-    for xCenter in np.linspace(12*(-1.5),12*(1.5),13):
-        for yCenter in np.linspace(22*(-(1-(0.5**2))**0.5),2*((1-(0.5**2))**0.5),13):
+    for xCenter in np.linspace(14*(-1.5),14*(1.5),15):
+        for yCenter in np.linspace(26*(-(1-(0.5**2))**0.5),2*((1-(0.5**2))**0.5),15):
             fullboard.append(plt.Circle((xCenter, yCenter), r, fill=False,color='k',linewidth=0.1))
-    for xCenter in np.linspace(-13*1.5,13*1.5,14):
-        for yCenter in np.linspace(23*(-(1-(0.5**2))**0.5),3*((1-(0.5**2))**0.5),14):
+    for xCenter in np.linspace(-15*1.5,15*1.5,16):
+        for yCenter in np.linspace(27*(-(1-(0.5**2))**0.5),3*((1-(0.5**2))**0.5),16):
             fullboard.append(plt.Circle((xCenter, yCenter), r, fill=False,color='k',linewidth=0.1))
-    for jj in range(0,13*13+14*14):
+    for jj in range(0,15*15+16*16):
         ax.add_patch(fullboard[jj])
     ############################## Save of Show ###################################
-    plt.show()
-    # plt.axis('off')
-    # plt.savefig(fname+'.eps',transparent=True)
+    if not save:
+        plt.show()
+    elif save:
+        plt.axis('off')
+        plt.savefig(fname+'.eps',transparent=True)
     # plt.close('all')
