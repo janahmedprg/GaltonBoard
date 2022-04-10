@@ -7,23 +7,25 @@ import csv
 fig, ax = plt.subplots()
 ax.set_aspect('equal')
 
-r=(1/1.125)/(0.5/(-0.5**2+1)**0.5)*0.5-0.4
+########################### User Interact ######################################
+r=(1/1.125)/(0.5/(-0.5**2+1)**0.5)*0.5
 eta = 0
-nXY=1
-nAng=200
 sumPosition=0
 coeffVstime=[[],[],[]]
-particles = nXY*nAng
-gravity = 2
-fname='galton('+str(round(r,2))+')_timeRange'+str(0)+'-'+str(78000)+'_particles'+str(particles)+'_eta'+str(eta)+'_gravity'+str(gravity)
+particles = 1000
+gravity = 1
+increment = 10000
+timeEnd = 100000
+################################################################################
 
 
-increment = 1000
+fname='galton('+str(round(r,2))+')_timeRange'+str(0)+'-'+str(timeEnd)+'_particles'+str(particles)+'_eta'+str(eta)+'_gravity'+str(gravity)
+
 timeCap = 0
-while(timeCap<51000):
+while(timeCap<timeEnd):
     sumPosition=0
     timeCap += increment
-    csvName = r'D:\Users\janah\Desktop\Projects\GaltonBoard\gdata_'+'eta_'+str(eta)+'time_'+str(timeCap)+'_particles'+str(particles)+'_grav'+str(gravity)+'.csv'
+    csvName = r'file_path\gdata_'+'eta_'+str(eta)+'time_'+str(timeCap)+'_particles'+str(particles)+'_grav'+str(gravity)+'.csv' # This should be changed to the location of the file
     rf = open(csvName,'r')
     reader = csv.reader(rf)
     next(reader)
@@ -47,26 +49,14 @@ while(timeCap<51000):
     coeffVstime[1].append(np.log(average)/np.log(timeCap))
 
 ################################################################################
-######################### Ploting Trajctory Map ################################
-################################################################################
-# ax.plot(tabX, tabY,'k',linewidth=1)
-# ax.plot(trajX, trajY,'k',linewidth=1)
-# disperser=plt.Circle((0, 0), r, fill=False,color='k')
-# ax.add_patch(disperser)
-############################### Save of Show ###################################
-# plt.show()
-# plt.axis('off')
-# plt.savefig(fname+'.eps',transparent=True)
-
-################################################################################
 ######################### Ploting Stat Experiment###############################
 ################################################################################
-# plt.errorbar(coeffVstime[0],coeffVstime[1],yerr=coeffVstime[2], linestyle='None', marker='o',capsize=2,color='black')
-plt.scatter(coeffVstime[0],coeffVstime[1],s=1,c='black')
+# plt.errorbar(coeffVstime[0],coeffVstime[1],yerr=coeffVstime[2], linestyle='None', marker='o',capsize=2,color='black') # For normal plotting
+plt.scatter(coeffVstime[0],coeffVstime[1],s=1,c='black') # For plotting with errorbar
 plt.xlabel('Time')
 plt.ylabel('log(E(y))/log(t)')
 plt.title('Eta='+str(eta))
 ax.set_aspect(1.0/ax.get_data_ratio(), adjustable='box')
 ############################### Save of Show ###################################
-# plt.show()
-plt.savefig(fname+'.eps')
+plt.show()
+# plt.savefig(fname+'.eps')

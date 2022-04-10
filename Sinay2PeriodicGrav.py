@@ -3,7 +3,6 @@ import math
 import matplotlib.pyplot as plt
 import random
 
-
 pi=np.pi
 
 def cos(x):
@@ -13,6 +12,8 @@ def sin(x):
     return np.sin(x)
 
 def make_ngon(n):
+    if n == 4:
+        return ([1, 1, -1, -1, 1],[-1, 1, 1, -1, -1])
     # Makes the heaxagonal bounds
     tabX=[1]
     tabY=[0]
@@ -69,60 +70,59 @@ def reflect(pX,pY,vX,vY,vS):
         (vX,vY,vS)=mat_mul(Rinv,Tr,R,vX,vY,vS)
     return (vX,vY,vS)
 
-def BilliardIte(pX,pY,vX,vY,vS,tabL,wall,r,isTorus,time):
-    bestDistance=1000
-    D=((2*pY*vY+2*pX*vX)**2-4*(vX**2+vY**2)*(pY**2+pX**2-r**2))
-    if D>=0 and isTorus:
-        # This if statement checks the collision with the disperser by solving for time t
-        t1=(-2*pY*vY-2*pX*vX+D**0.5)/(2*(vX**2+vY**2))
-        t2=(-2*pY*vY-2*pX*vX-D**0.5)/(2*(vX**2+vY**2))
-        if t1<0 and t2<0:
-            pass
-        else:
-            for i in [t1,t2]:
-                if i<0:
-                    continue
-                newPx=pX+vX*i
-                newPy=pY+vY*i
-                newNorm=((pX-newPx)**2+(pY-newPy)**2)**0.5
-                if newNorm<bestDistance:
-                    bestDistance=newNorm
-                    bestPx=newPx
-                    bestPy=newPy
-                    besttime=i
-                    bestxTravel=vX*i
-                    bestyTravel=vY*i
-            time+=besttime
-            return (bestPx,bestPy,vX,vY,vS,False,-1,time,bestxTravel,bestyTravel)
+def BilliardIte(pX,pY,vX,vY,vS,r,isTorus,time,disp):
+    bestTime=1000
+    bestTime1=1000
 
-    elif(not isTorus):
+    if(not isTorus):
         # if we pass in a point on the disperser we call reflect
         vX,vY,vS=reflect(pX,pY,vX,vY,vS)
 
-    # If it misses the disperser and we are not passing in a point on the disperser
-    # we check for collisions with the boundaries.
-    for i in range(0,len(tabL)):
-        if i==wall:
-            continue
-        if (tabL[i][2]*vY-tabL[i][3]*vX) == 0:
-            print('WARNING DIVISION BY ZERO LINE 113')
-            continue
-        t=(tabL[i][1]*tabL[i][2]+tabL[i][3]*pX-tabL[i][3]*tabL[i][0]-tabL[i][2]*pY)/(tabL[i][2]*vY-tabL[i][3]*vX)
-        if t<0:
-            continue
-        newPx=pX+vX*t
-        newPy=pY+vY*t
-        newNorm=((pX-newPx)**2+(pY-newPy)**2)**0.5
-        if newNorm<bestDistance:
-            bestDistance=newNorm
-            bestPx=newPx
-            bestPy=newPy
-            bestWall=i
-            besttime=t
-            bestxTravel=vX*t
-            bestyTravel=vY*t
-    time+=besttime
-    return (bestPx,bestPy,vX,vY,vS,True,bestWall,time,bestxTravel,bestyTravel)
+    # This checks the collision with the disperser by solving for time t
+    # We will have 4 different times because we have a parabolic trajectory
+    if disp == 0:
+        coeff=[0.25*(gravity**2),-vY*gravity,-pY*gravity+vX**2+vY**2,2*pX*vX+2*pY*vY,pX**2+pY**2-r**2]
+        intersect = np.roots(coeff)
+        for ti in intersect:
+            if np.iscomplex(ti) or ti<10**(-9):
+                continue
+            ti = float(ti.real)
+            if ti < bestTime:
+                bestTime = ti
+                bestxTravel=[]
+                bestyTravel=[]
+                for j in np.linspace(0,ti,10*int(math.exp(ti))):
+                    bestxTravel.append(pX + vX*j)
+                    bestyTravel.append(pY + vY*j - 0.5*(j**2)*gravity)
+                bestPx = pX + vX*ti
+                bestPy = pY + vY*ti - 0.5*(ti**2)*gravity
+
+    elif disp == 1:
+        coeff1=[0.25*(gravity**2),-vY*gravity,-pY*gravity+vX**2+vY**2,2*pX*vX+2*pY*vY-4*vX,pX**2+pY**2-r**2-4*pX+4]
+        intersect1 = np.roots(coeff1)
+        for ti in intersect1:
+            if np.iscomplex(ti) or ti<10**(-9):
+                continue
+            ti = float(ti.real)
+            if ti < bestTime1:
+                bestTime1 = ti
+                bestxTravel=[]
+                bestyTravel=[]
+                for j in np.linspace(0,ti,10*int(math.exp(ti))):
+                    bestxTravel.append(pX + vX*j)
+                    bestyTravel.append(pY + vY*j - 0.5*(j**2)*gravity)
+                bestPx = pX + vX*ti
+                bestPy = pY + vY*ti - 0.5*(ti**2)*gravity
+
+    if disp == 0 and bestTime>10**(-9) and bestTime != 1000:
+        time+=bestTime
+        return (bestPx,bestPy,vX,vY-bestTime*gravity,vS,False,time,bestxTravel,bestyTravel,1)
+    elif disp == 1 and bestTime1>10**(-9) and bestTime1 != 1000:
+        time+=bestTime1
+        return (bestPx,bestPy,vX,vY-bestTime1*gravity,vS,False,time,bestxTravel,bestyTravel,0)
+    else:
+        return (0,0,0,0,0,False,0,0,0,-1)
+
 
 def torus(pX,pY,wall):
     # Makes the torus effect. Instead of reflecting it starts on the opposite side of the hexagonal bounds.
@@ -162,84 +162,95 @@ def torus(pX,pY,wall):
             print("WARNING: VERTEX HIT")
     return (pX,pY,wall)
 
-def getXYAng(r,epsilon,n,m):
+def box(pX,pY,wall):
+    # Makes the torus effect. Instead of reflecting it starts on the opposite side of the hexagonal bounds.
+    if(wall==0 or wall==2):
+        pX=-pX
+        if wall==0:
+            wall=2
+        else:
+            wall=0
+    elif(wall==1 or wall==3):
+        pY=-pY
+        if wall==1:
+            wall=3
+        else:
+            wall=1
+    else:
+        print("WARNING: VERTEX HIT")
+    return (pX,pY,wall)
+
+def getXYAng(r,epsilon,n):
     # Gets initial positions with angles.
     xyPos=[[],[],[],[]]
-    for i in range(0,n*m):
-        sang=np.random.uniform(np.pi,np.pi*2)
-        x=r*cos(sang)
-        y=r*sin(sang)
-        if(y<0):
-            y-=epsilon
-        else:
-            y+=epsilon
-        sang-=np.pi/2
-        angle = np.random.uniform(sang,sang+np.pi)
-        xyPos[0].append(x)
-        xyPos[1].append(y)
-        xyPos[2].append(angle)
-        xyPos[3].append(np.random.uniform(-0.9999,0.9999))
+    sang = 0.5 #np.pi/2-0.01
+    x=r*cos(sang)
+    y=r*sin(sang)
+    if(y<0):
+        y-=epsilon
+    else:
+        y+=epsilon
+    angle = 0.1
+
+    xyPos[0].append(x)
+    xyPos[1].append(y)
+    xyPos[2].append(angle)
+    xyPos[3].append(sang)
     return xyPos
 ################################################################################
 ################################ Interact ######################################
 ################################################################################
-r=(1/1.125)/(0.5/(-0.5**2+1)**0.5)*0.5
-sides=6
-startX=0.6
-startY=0
-spin=0
-eta=0
-N=1
-timeCap=30
+r=0.8
+sides=4
+eta= np.arccos(1/3)/np.pi
+N=200
 etaRange=11
-nXY=5
-nAng=3
+nXY=1
 etaStart=0
 etaEnd=1
+perturbation = 0
+gravity = 1
 ################################################################################
 ################################################################################
 epsilon=0.0001
 ########################## TRAJECTORY MAP ######################################
-xyang=getXYAng(r,epsilon,nXY,nAng)
+xyang=getXYAng(r,epsilon,nXY)
 
-for px,py,startAng in zip(xyang[0],xyang[1],xyang[2]):
+for px,py,startAng, phiAng in zip(xyang[0],xyang[1],xyang[2],xyang[3]):
     fname='galton('+str(round(eta,2))+','+str(round(r,2))+'_x'+str(round(px,2))+'_y'+str(round(py,2))+'_ang'+str(round(math.degrees(startAng),2))+')_ite'+str(N)
     fig, ax = plt.subplots()
     ax.set_aspect('equal')
+    h = (1-px)
+    speed = ((2*gravity*h)/np.sin(2*startAng))**0.5
     pX=px
     pY=py
-    vX=np.cos(startAng)
-    vY=np.sin(startAng)
-    vS=spin
-    norm=(vX**2+vY**2+vS**2)**0.5
-    vX=vX/norm
-    vY=vY/norm
-    vS=vS/norm
+    vX=speed*np.cos(startAng)
+    vY=speed*np.sin(startAng)
+    vS=(speed/(((1-np.cos(np.pi*eta))/(np.cos(np.pi*eta)+1))**0.5))* (np.cos(startAng)*np.sin(phiAng) + np.sin(startAng)*np.cos(phiAng))+perturbation
     trajX=[]
     trajY=[]
     isTorus=True # Don't change unless we are starting on the disperses
-    wall=-1
     time=0
-
-
-    (tabX,tabY)=make_ngon(sides)
-    tabLineEqs=getLines(tabX,tabY,sides)
+    disp = 1
 
     for i in range(0,N):
         trajX.append(pX)
         trajY.append(pY)
-        (pX,pY,vX,vY,vS,isTorus,wall,time,xTravel,yTravel)=BilliardIte(pX,pY,vX,vY,vS,tabLineEqs,wall,r,isTorus,time)
-        trajX.append(pX)
-        trajY.append(pY)
+        (pX,pY,vX,vY,vS,isTorus,time,xTravel,yTravel,disp)=BilliardIte(pX,pY,vX,vY,vS,r,isTorus,time,disp)
+        if disp == -1:
+            print(i)
+            break
+        for j in range(0,len(xTravel)):
+            trajX.append(xTravel[j])
+            trajY.append(yTravel[j])
         trajX.append(None)
         trajY.append(None)
-        if isTorus:
-            (pX,pY,wall)=torus(pX,pY,wall)
 
-    ax.plot(tabX, tabY,'k',linewidth=1)
     ax.plot(trajX, trajY,'k',linewidth=1)
     disperser=plt.Circle((0, 0), r, fill=False,color='k')
+    disperser2 = plt.Circle((2, 0), r, fill=False,color='k')
     ax.add_patch(disperser)
+    ax.add_patch(disperser2)
     ############################## Save of Show ###################################
     plt.show()
     # plt.axis('off')

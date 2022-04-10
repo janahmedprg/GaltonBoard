@@ -14,6 +14,8 @@ def sin(x):
 
 def make_ngon(n):
     # Makes the heaxagonal bounds
+    if n == 4:
+        return ([1, 1, -1, -1, 1],[-1, 1, 1, -1, -1])
     tabX=[1]
     tabY=[0]
     for i in range(1,n+1):
@@ -21,6 +23,7 @@ def make_ngon(n):
         tabY+=[np.sin(i*2*np.pi/n)]
     # print(tabX)
     # print(tabY)
+    print(tabX)
     return (tabX,tabY)
 
 def getLines(tabX,tabY,n):
@@ -105,7 +108,7 @@ def BilliardIte(pX,pY,vX,vY,vS,tabL,wall,r,isTorus,time):
         if i==wall:
             continue
         if (tabL[i][2]*vY-tabL[i][3]*vX) == 0:
-            print('WARNING DIVISION BY ZERO LINE 113')
+            # print('WARNING DIVISION BY ZERO LINE 113')
             continue
         t=(tabL[i][1]*tabL[i][2]+tabL[i][3]*pX-tabL[i][3]*tabL[i][0]-tabL[i][2]*pY)/(tabL[i][2]*vY-tabL[i][3]*vX)
         if t<0:
@@ -126,122 +129,138 @@ def BilliardIte(pX,pY,vX,vY,vS,tabL,wall,r,isTorus,time):
 
 def torus(pX,pY,wall):
     # Makes the torus effect. Instead of reflecting it starts on the opposite side of the hexagonal bounds.
-    if(isTorus):
-        if(wall==1 or wall==4):
-            pY=-pY
-            if wall==1:
-                wall=4
-            else:
-                wall=1
-        elif(wall==0 or wall==3):
-            rDis=(pX**2+pY**2)**0.5
-            if wall==0:
-                ang=np.arctan(pY/pX)
-                pX=rDis*np.cos(4/3*np.pi-ang)
-                pY=rDis*np.sin(4/3*np.pi-ang)
-                wall=3
-            else:
-                ang=np.arctan(pY/pX)
-                pX=rDis*np.cos(1/3*np.pi-ang)
-                pY=rDis*np.sin(1/3*np.pi-ang)
-                wall=0
-        elif(wall==2 or wall==5):
-            rDis=(pX**2+pY**2)**0.5
-            if wall==2:
-                ang=np.arctan(pY/pX)
-                pX=rDis*np.cos(10/6*np.pi-ang)
-                pY=rDis*np.sin(10/6*np.pi-ang)
-                wall=5
-            else:
-                ang=np.arctan(pY/pX)
-                pX=rDis*np.cos(2/3*np.pi-ang)
-                pY=rDis*np.sin(2/3*np.pi-ang)
-                wall=2
-
+    if(wall==1 or wall==4):
+        pY=-pY
+        if wall==1:
+            wall=4
         else:
-            print("WARNING: VERTEX HIT")
+            wall=1
+    elif(wall==0 or wall==3):
+        rDis=(pX**2+pY**2)**0.5
+        if wall==0:
+            ang=np.arctan(pY/pX)
+            pX=rDis*np.cos(4/3*np.pi-ang)
+            pY=rDis*np.sin(4/3*np.pi-ang)
+            wall=3
+        else:
+            ang=np.arctan(pY/pX)
+            pX=rDis*np.cos(1/3*np.pi-ang)
+            pY=rDis*np.sin(1/3*np.pi-ang)
+            wall=0
+    elif(wall==2 or wall==5):
+        rDis=(pX**2+pY**2)**0.5
+        if wall==2:
+            ang=np.arctan(pY/pX)
+            pX=rDis*np.cos(10/6*np.pi-ang)
+            pY=rDis*np.sin(10/6*np.pi-ang)
+            wall=5
+        else:
+            ang=np.arctan(pY/pX)
+            pX=rDis*np.cos(2/3*np.pi-ang)
+            pY=rDis*np.sin(2/3*np.pi-ang)
+            wall=2
+
+    else:
+        print("WARNING: VERTEX HIT")
     return (pX,pY,wall)
 
-def getXYAng(r,epsilon,n,m):
+def box(pX,pY,wall):
+    # Makes the torus effect. Instead of reflecting it starts on the opposite side of the hexagonal bounds.
+    if(wall==0 or wall==2):
+        pX=-pX
+        if wall==0:
+            wall=2
+        else:
+            wall=0
+    elif(wall==1 or wall==3):
+        pY=-pY
+        if wall==1:
+            wall=3
+        else:
+            wall=1
+    else:
+        print("WARNING: VERTEX HIT")
+    return (pX,pY,wall)
+
+def getXYAng(r,epsilon,n):
     # Gets initial positions with angles.
     xyPos=[[],[],[],[]]
-    for i in range(0,n*m):
-        sang=np.random.uniform(np.pi,np.pi*2)
+    for sang in np.linspace(0,np.pi/2-0.05,n):
         x=r*cos(sang)
         y=r*sin(sang)
         if(y<0):
             y-=epsilon
         else:
             y+=epsilon
-        sang-=np.pi/2
-        angle = np.random.uniform(sang,sang+np.pi)
+        angle = 0
+
         xyPos[0].append(x)
         xyPos[1].append(y)
         xyPos[2].append(angle)
-        xyPos[3].append(np.random.uniform(-0.9999,0.9999))
+        xyPos[3].append(sang)
     return xyPos
 ################################################################################
 ################################ Interact ######################################
 ################################################################################
-r=(1/1.125)/(0.5/(-0.5**2+1)**0.5)*0.5
-sides=6
-startX=0.6
-startY=0
-spin=0
-eta=0
-N=1
-timeCap=30
-etaRange=11
-nXY=5
-nAng=3
-etaStart=0
-etaEnd=1
+r=0
+sides=4
+eta= np.arccos(1/3)/np.pi
+N=5000
+grid=100
+perturbation = 0.01
 ################################################################################
 ################################################################################
 epsilon=0.0001
 ########################## TRAJECTORY MAP ######################################
-xyang=getXYAng(r,epsilon,nXY,nAng)
-
-for px,py,startAng in zip(xyang[0],xyang[1],xyang[2]):
-    fname='galton('+str(round(eta,2))+','+str(round(r,2))+'_x'+str(round(px,2))+'_y'+str(round(py,2))+'_ang'+str(round(math.degrees(startAng),2))+')_ite'+str(N)
-    fig, ax = plt.subplots()
-    ax.set_aspect('equal')
-    pX=px
-    pY=py
-    vX=np.cos(startAng)
-    vY=np.sin(startAng)
-    vS=spin
-    norm=(vX**2+vY**2+vS**2)**0.5
-    vX=vX/norm
-    vY=vY/norm
-    vS=vS/norm
-    trajX=[]
-    trajY=[]
-    isTorus=True # Don't change unless we are starting on the disperses
-    wall=-1
-    time=0
 
 
-    (tabX,tabY)=make_ngon(sides)
-    tabLineEqs=getLines(tabX,tabY,sides)
+fname='sinayExp('+str(round(eta,3))+')_p'+str(round(perturbation,3))+'_grid' + str(grid)
+fig, ax = plt.subplots()
+ax.set_aspect('equal')
 
-    for i in range(0,N):
-        trajX.append(pX)
-        trajY.append(pY)
-        (pX,pY,vX,vY,vS,isTorus,wall,time,xTravel,yTravel)=BilliardIte(pX,pY,vX,vY,vS,tabLineEqs,wall,r,isTorus,time)
-        trajX.append(pX)
-        trajY.append(pY)
-        trajX.append(None)
-        trajY.append(None)
-        if isTorus:
-            (pX,pY,wall)=torus(pX,pY,wall)
+phiAx = np.linspace(0,np.pi/2-0.05,grid) #start and end needs to be same as in geXYAng() steps needs to be +1
+rAx = np.linspace(0,0.99,grid) #start and end needs to be same as in r in linspace below steps needs to be +1
+nColAx = np.zeros((grid,grid))
+iCol = 0
+iRow = 0
 
-    ax.plot(tabX, tabY,'k',linewidth=1)
-    ax.plot(trajX, trajY,'k',linewidth=1)
-    disperser=plt.Circle((0, 0), r, fill=False,color='k')
-    ax.add_patch(disperser)
-    ############################## Save of Show ###################################
-    plt.show()
-    # plt.axis('off')
-    # plt.savefig(fname+'.eps',transparent=True)
-    # plt.close('all')
+for r in rAx:
+    xyang=getXYAng(r,epsilon,grid)
+    for px,py,startAng,phiAng in zip(xyang[0],xyang[1],xyang[2],xyang[3]):
+        pX=px
+        pY=py
+        vX=np.cos(startAng)
+        vY=np.sin(startAng)
+        vS=-vX*np.sin(phiAng)/(((1-np.cos(np.pi*eta))/(np.cos(np.pi*eta)+1))**0.5)+perturbation
+        norm=(vX**2+vY**2+vS**2)**0.5
+        vX=vX/norm
+        vY=vY/norm
+        vS=vS/norm
+        isTorus=True # Don't change unless we are starting on the disperses
+        wall=-1
+        time=0
+        nCol = -1
+
+        (tabX,tabY)=make_ngon(sides)
+        tabLineEqs=getLines(tabX,tabY,sides)
+
+        for i in range(0,N):
+            (pX,pY,vX,vY,vS,isTorus,wall,time,xTravel,yTravel)=BilliardIte(pX,pY,vX,vY,vS,tabLineEqs,wall,r,isTorus,time)
+            if pY > r+0.1 or pY<-r-0.1:
+                nCol = i
+                break
+            if isTorus:
+                (pX,pY,wall)=box(pX,pY,wall)
+
+        if nCol == -1:
+            nCol = N
+        nColAx[iRow][iCol] = nCol
+        iCol += 1
+        iCol = iCol%grid
+    iRow += 1
+
+ax.pcolormesh(phiAx, rAx, nColAx, shading='nearest', vmin=nColAx.min(), vmax=nColAx.max())
+############################## Save of Show ###################################
+plt.savefig(fname+'.eps')
+plt.show()
+plt.close('all')

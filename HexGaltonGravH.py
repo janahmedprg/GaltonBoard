@@ -77,10 +77,6 @@ def BilliardIte(pX,pY,vX,vY,vS,tabL,wall,r,isTorus,time):
     if(not isTorus):
         # if we pass in a point on the disperser we call reflect
         vX,vY,vS=reflect(pX,pY,vX,vY,vS)
-        # norm=(vX**2+vY**2+vS**2)**0.5
-        # vX=vX/norm
-        # vY=vY/norm
-        # vS=vS/norm
 
     for i in range(0,len(tabL)):
         if i==wall:
