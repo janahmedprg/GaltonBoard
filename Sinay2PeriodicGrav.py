@@ -80,6 +80,7 @@ def BilliardIte(pX,pY,vX,vY,vS,r,isTorus,time,disp):
 
     # This checks the collision with the disperser by solving for time t
     # We will have 4 different times because we have a parabolic trajectory
+    print(vX,vY,vS)
     if disp == 0:
         coeff=[0.25*(gravity**2),-vY*gravity,-pY*gravity+vX**2+vY**2,2*pX*vX+2*pY*vY,pX**2+pY**2-r**2]
         intersect = np.roots(coeff)
@@ -203,7 +204,7 @@ def getXYAng(r,epsilon,n):
 r=0.8
 sides=4
 eta= np.arccos(1/3)/np.pi
-N=200
+N=10
 etaRange=11
 nXY=1
 etaStart=0
@@ -226,7 +227,7 @@ for px,py,startAng, phiAng in zip(xyang[0],xyang[1],xyang[2],xyang[3]):
     pY=py
     vX=speed*np.cos(startAng)
     vY=speed*np.sin(startAng)
-    vS=(speed/(((1-np.cos(np.pi*eta))/(np.cos(np.pi*eta)+1))**0.5))* (np.cos(startAng)*np.sin(phiAng) + np.sin(startAng)*np.cos(phiAng))+perturbation
+    vS=(speed*(2**0.5))*(np.cos(startAng)*np.sin(phiAng) - np.sin(startAng)*np.cos(phiAng))#(speed/(((1-np.cos(np.pi*eta))/(np.cos(np.pi*eta)+1))**0.5))*(-np.cos(startAng)*np.sin(phiAng) + np.sin(startAng)*np.cos(phiAng)) + perturbation
     trajX=[]
     trajY=[]
     isTorus=True # Don't change unless we are starting on the disperses

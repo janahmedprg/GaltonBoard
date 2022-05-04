@@ -205,7 +205,7 @@ def getXYAng(r,epsilon,n):
 r=0
 sides=4
 eta= np.arccos(1/3)/np.pi
-N=5000
+N=50
 grid=100
 perturbation = 0.01
 ################################################################################
