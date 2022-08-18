@@ -2,6 +2,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 import random
+from scipy import stats
 
 
 pi=np.pi
@@ -186,7 +187,8 @@ def torus(pX,pY,wall):
 def getXYAng(r,epsilon,n,m):
     # Gets initial positions with angles.
     xyPos=[[],[],[],[]]
-    for sang in np.linspace(np.pi+np.pi/6,np.pi/6,n):
+    for ii in range(n*m):
+        sang = np.random.uniform(np.pi+np.pi/6,np.pi/6)
         x=r*cos(sang)
         y=r*sin(sang)
         if(y<0):
@@ -194,31 +196,24 @@ def getXYAng(r,epsilon,n,m):
         else:
             y+=epsilon
         sang-=np.pi/2
-        for j in np.linspace(sang,sang+np.pi,m):
-            xyPos[0].append(x)
-            xyPos[1].append(y)
-            xyPos[2].append(j)
-            xyPos[3].append(np.random.uniform(-0.9999,0.9999))
+        j = np.random.uniform(sang,sang+np.pi)
+        xyPos[0].append(x)
+        xyPos[1].append(y)
+        xyPos[2].append(j)
+        xyPos[3].append(np.random.uniform(-0.5,0.5))
     return xyPos
 ################################################################################
 ################################ Interact ######################################
 ################################################################################
 r=(1/1.125)/(0.5/(-0.5**2+1)**0.5)*0.5
 sides=6
-startX=0.81
-startY=0
-startAng=110
-spin=0
-eta=0.5
-N=20
-timeCap=5000
-etaRange=11
-nXY=10
-nAng=20
-etaStart=0
-etaEnd=1
+eta= 0#np.arccos(1/3)/np.pi
+timeCap=50
+nXY=100
+nAng=1000
 gravity = 1
-binsD =  481
+binsD = 38
+dist = stats.norm()
 ################################################################################
 ################################################################################
 epsilon=0.0001
@@ -233,7 +228,7 @@ fname='galton('+str(round(eta,2))+')_particles'+str(particles)+'_grav'+str(round
 trapped = 0
 xDist = []
 
-for px,py,startAng in zip(xyang[0],xyang[1],xyang[2]):
+for px,py,startAng,spin in zip(xyang[0],xyang[1],xyang[2],xyang[3]):
     pX=px
     pY=py
     vX=np.cos(startAng)
@@ -253,20 +248,22 @@ for px,py,startAng in zip(xyang[0],xyang[1],xyang[2]):
 
     xFrame = pX
     yFrame = pY
+    trap = True
     while time<timeCap:
         (pX,pY,vX,vY,vS,isTorus,wall,time,xTravel,yTravel)=BilliardIte(pX,pY,vX,vY,vS,tabLineEqs,wall,r,isTorus,time)
         xFrame += xTravel
         yFrame += yTravel
-        if (yFrame<=-4):
+        if (yFrame<=-0.5):
+            trap = False
             break
         if isTorus:
             (pX,pY,wall)=torus(pX,pY,wall)
 
-    if time>=timeCap:
+    if trap:
         print('trapped', trapped)
         trapped +=1
     else:
-        D=vY**2-2*(yFrame+4)*gravity
+        D=vY**2-2*(yFrame+0.5)*gravity
         if (D<0):
             print("D<0, this shouldn't happen check D eq and the Y finish line")
             continue
@@ -297,13 +294,14 @@ for px,py,startAng in zip(xyang[0],xyang[1],xyang[2]):
         # xDist[index] +=1
         # print(xFrame-vX*trev)
 
-hbin = np.linspace(-30,30,binsD)
-print('max',max(xDist))
-print('min',min(xDist))
+# hbin = np.linspace(-7,7,binsD)
+# print(len(xDist))
+# print(xDist)
 print(trapped)
 
-plt.hist(xDist,bins=hbin)
-
+# plt.hist(xDist,bins=hbin)
+xDist.sort()
+plt.plot(xDist,dist.pdf(xDist))
 
 ############################## Save of Show ###################################
 plt.show()
