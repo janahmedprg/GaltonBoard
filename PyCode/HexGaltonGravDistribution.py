@@ -3,6 +3,8 @@ import math
 import matplotlib.pyplot as plt
 import random
 from scipy import stats
+import seaborn as sns
+import csv
 
 
 pi=np.pi
@@ -184,10 +186,10 @@ def torus(pX,pY,wall):
             print("WARNING: VERTEX HIT")
     return (pX,pY,wall)
 
-def getXYAng(r,epsilon,n,m):
+def getXYAng(r,epsilon,n):
     # Gets initial positions with angles.
     xyPos=[[],[],[],[]]
-    for ii in range(n*m):
+    for ii in range(n):
         sang = np.random.uniform(np.pi+np.pi/6,np.pi/6)
         x=r*cos(sang)
         y=r*sin(sang)
@@ -205,106 +207,101 @@ def getXYAng(r,epsilon,n,m):
 ################################################################################
 ################################ Interact ######################################
 ################################################################################
+# r- radius of disperser; etaList- a list of eta's;
+# timeCap- maximum allowed time before the program decides that the particle is trapped;
+# Nparticles- number of particles; gravity- gravity;
+# heightCap- the height the particle needs to reach to capture the distribution.
 r=(1/1.125)/(0.5/(-0.5**2+1)**0.5)*0.5
 sides=6
-eta= 0#np.arccos(1/3)/np.pi
-timeCap=50
-nXY=100
-nAng=1000
+etaList= [np.arccos(1/3)/np.pi]
+timeCap=500
+Nparticles = 100000
 gravity = 1
-binsD = 38
-dist = stats.norm()
+heightCap = -15
 ################################################################################
 ################################################################################
 epsilon=0.0001
 ########################## TRAJECTORY MAP ######################################
-xyang=getXYAng(r,epsilon,nXY,nAng)
-particles = nXY*nAng
-# xyang = [[startX],[startY],[math.radians(startAng)]]
+xyang=getXYAng(r,epsilon,Nparticles)
 sum = 0
-fig, ax = plt.subplots()
-ax.set_aspect('equal')
-fname='galton('+str(round(eta,2))+')_particles'+str(particles)+'_grav'+str(round(gravity,3))+'_bins'+str(binsD)+'_dist'
+fname='galton'+'_particles'+str(Nparticles)+'_grav'+str(round(gravity,3))+'_distv6'
 trapped = 0
-xDist = []
+totalDist = []
 
-for px,py,startAng,spin in zip(xyang[0],xyang[1],xyang[2],xyang[3]):
-    pX=px
-    pY=py
-    vX=np.cos(startAng)
-    vY=np.sin(startAng)
-    vS=spin
-    norm=(vX**2+vY**2+vS**2)**0.5
-    vX=vX/norm
-    vY=vY/norm
-    vS=vS/norm
-    isTorus=True # Don't change unless we are starting on the disperses
-    wall=-1
-    time=0
+for ETA in etaList:
+    eta = ETA
+    csvName = 'distData_eta'+str(round(eta,2))+'_timeCap'+str(timeCap)+'_particles'+str(Nparticles)+'_grav'+str(gravity)+'.csv'
+    f = open(csvName, 'w', newline='')
+    writer = csv.writer(f)
+    writer.writerow(['xFrame','yFrame','pX','pY','vX','vY','vS','wall','isTorus','time','trapped'])
+    xDist = []
+    trapped = 0
+    for px,py,startAng,spin in zip(xyang[0],xyang[1],xyang[2],xyang[3]):
+        pX=px
+        pY=py
+        vX=np.cos(startAng)
+        vY=np.sin(startAng)
+        vS=spin
+        norm=(vX**2+vY**2+vS**2)**0.5
+        vX=vX/norm
+        vY=vY/norm
+        vS=vS/norm
+        isTorus=True # Don't change unless we are starting on the disperses
+        wall=-1
+        time=0
+        (tabX,tabY)=make_ngon(sides)
+        tabLineEqs=getLines(tabX,tabY,sides)
+        xFrame = pX
+        yFrame = pY
+        trap = True
+        while time<timeCap:
+            (pX,pY,vX,vY,vS,isTorus,wall,time,xTravel,yTravel)=BilliardIte(pX,pY,vX,vY,vS,tabLineEqs,wall,r,isTorus,time)
+            xFrame += xTravel
+            yFrame += yTravel
+            if (yFrame<=heightCap):
+                trap = False
+                break
+            if isTorus:
+                (pX,pY,wall)=torus(pX,pY,wall)
 
+        if trap:
+            # print('trappe+d', trapped)
+            trapped +=1
+            writer.writerow([xFrame,yFrame,pX,pY,vX,vY,vS,wall,isTorus,time,True])
+        else:
+            D=vY**2-2*(yFrame-heightCap)*gravity
+            if (D<0):
+                print("D<0, this shouldn't happen check D eq and the Y finish line")
+                continue
 
-    (tabX,tabY)=make_ngon(sides)
-    tabLineEqs=getLines(tabX,tabY,sides)
+            trev1 = (-vY+D**0.5)/(-1*gravity)
+            trev2 = (-vY-D**0.5)/(-1*gravity)
+            if trev1<0 and trev2>0:
+                trev = trev2
+            elif trev2<0 and trev1>0:
+                trev = trev1
+            elif trev2>trev1:
+                trev = trev1
+            elif trev1> trev2:
+                trev = trev2
+            elif trev1<0 and trev2<0:
+                print("NO TIME REVERSE")
+                continue
 
-    xFrame = pX
-    yFrame = pY
-    trap = True
-    while time<timeCap:
-        (pX,pY,vX,vY,vS,isTorus,wall,time,xTravel,yTravel)=BilliardIte(pX,pY,vX,vY,vS,tabLineEqs,wall,r,isTorus,time)
-        xFrame += xTravel
-        yFrame += yTravel
-        if (yFrame<=-0.5):
-            trap = False
-            break
-        if isTorus:
-            (pX,pY,wall)=torus(pX,pY,wall)
+            xDist.append(xFrame-vX*(trev-0.7))
+            writer.writerow([xFrame,yFrame,pX,pY,vX,vY,vS,wall,isTorus,time,False])
 
-    if trap:
-        print('trapped', trapped)
-        trapped +=1
-    else:
-        D=vY**2-2*(yFrame+0.5)*gravity
-        if (D<0):
-            print("D<0, this shouldn't happen check D eq and the Y finish line")
-            continue
+    print(trapped)
+    xDist.sort()
+    totalDist.append(xDist)
+    f.close()
 
-        trev1 = (-vY+D**0.5)/(-1*gravity)
-        trev2 = (-vY-D**0.5)/(-1*gravity)
-        if trev1<0 and trev2>0:
-            trev = trev2
-        elif trev2<0 and trev1>0:
-            trev = trev1
-        elif trev2>trev1:
-            trev = trev1
-        elif trev1> trev2:
-            trev = trev2
-        elif trev1<0 and trev2<0:
-            print("NO TIME REVERSE")
-            continue
-
-        xDist.append(xFrame-vX*trev)
-        # index = 0
-        # finalX = xFrame-vX*trev
-        # if (finalX>0):
-        #     index += 239
-        #     index += int(finalX)*8+int(((finalX-int(finalX))*1000)/125)
-        # elif (finalX>=0):
-        #     index += 240
-        #     index -= int(finalX)*8+int(((finalX-int(finalX))*1000)/125)
-        # xDist[index] +=1
-        # print(xFrame-vX*trev)
-
-# hbin = np.linspace(-7,7,binsD)
-# print(len(xDist))
-# print(xDist)
-print(trapped)
-
-# plt.hist(xDist,bins=hbin)
-xDist.sort()
-plt.plot(xDist,dist.pdf(xDist))
-
+sns.displot(totalDist, kind="kde", legend=False)
 ############################## Save of Show ###################################
-plt.show()
+plt.xlabel("x-coord")
+plt.ylabel("proportrion")
+plt.legend([round(e,2) for e in etaList])
+# plt.show()
 # plt.axis('off')
-# plt.savefig(fname+'.eps',transparent=True)
+plt.savefig(fname+'.eps',transparent=True)
 # plt.close('all')
